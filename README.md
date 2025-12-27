@@ -4,6 +4,8 @@
 
 Projeto de extensão desenvolvido no município de Santo André (SP) com o objetivo de apresentar, em um mapa interativo, as unidades públicas de saúde e farmácias conveniadas que realizam a distribuição de medicamentos específicos, incluindo medicamentos para tratamento do tabagismo e medicamentos controlados.
 
+Pode chegar a página clicando [aqui](https://liviavieiramendes.github.io/Meu-Remedio-Mapeado/).
+
 ---
 
 ## Funcionalidades
