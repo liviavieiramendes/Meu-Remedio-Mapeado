@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meu Remédio Mapeado - Santo André</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    html,body { height:100%; margin:0; font-family: Arial, sans-serif; }
+    #map { height:75vh; width:100%; }
+    h1 { margin:0; padding:10px; background:#006837; color:white; text-align:center; }
+    p { text-align:center; margin:8px; }
+    .legenda { text-align:center; padding:10px; background:white; border-top:1px solid #ccc; }
+    .legenda span { margin:0 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Meu Remédio Mapeado - Santo André</h1>
+  <p>Unidades de saúde do SUS e farmácias credenciadas (parte do Programa Farmácia Popular) que oferecem medicamentos diversos, incluindo medicamentos para o tratamento do tabagismo e/ou medicamentos controlados.</p>
+  <p><small>💊 Todos os postos de distribuição de medicamentos do SUS também disponibilizam medicamentos convencionais.</small></p>
+
+  <div id="map"></div>
+
+  <div class="legenda">
+    <span style="color:green">🟢 Tabagismo + Controlados</span>
+    <span style="color:blue">🔵 Apenas Tabagismo</span>
+    <span style="color:rgb(255, 85, 0)">🟠 Apenas Controlados</span>
+    <span style="color:rgb(243, 0, 0)">🔴 Farmácia Popular</span>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // --- VERDE ---
+    const ubsTabagismoControlados = [
+        {nome:"UBS Alzira Franco", end:"Rua Asa Branca, s/nº, Jardim Alzira Franco, CEP 09272-530", hor:"Seg a Sex 7h às 17h", lat:-23.65037, lng:-46.49557},
+        {nome:"Unidade de Saúde Parque Andreense", end:"Avenida Ibertioga, 100, Parque Represa Billings II, CEP 09160-230", hor:"Seg a Sex 7h às 17h", lat:-23.76179, lng:-46.46092},
+        {nome:"USF Parque Miami", end:"Estrada do Pedroso, 5151, Parque Miami, CEP 09133-000", hor:"Seg a Sex 7h às 21h", lat:-23.73749, lng:-46.49608},
+        {nome:"Policlínica Parque Novo Oratório", end:"Rua Tunísia, s/nº, Parque Novo Oratório, CEP 09260-090", hor:"Seg a Sex 7h às 16h", lat:-23.63029, lng:-46.50708},
+        {nome:"Unidade de Saúde Vila Palmares", end:"Praça Áurea, 234, Vila Palmares, CEP 09061-405", hor:"Seg a Sex 7h às 17h", lat:	-23.651745823659116, lng:-46.56045497264451},
+        {nome:"UBS Cidade São Jorge", end:"Avenida São Paulo, 800, Cidade São Jorge, CEP 09111-410", hor:"Seg a Sex 7h às 17h", lat:-23.670009878281924, lng:-46.48697936031761},
+        {nome:"UBS Jardim Alvorada", end:"Rua Dr. Almenor Jardim Silveira, s/nº, Jardim Alvorada, CEP 09180-070", hor:"Seg a Sex 7h às 17h", lat:-23.69604423451417, lng:-46.52121620228308},
+        {nome:"UBS Jardim Carla", end:"Rua José de Alencar, s/nº, Jardim Carla, CEP 09131-250", hor:"Seg a Sex 7h às 17h", lat:-23.694391807806998, lng:-46.494811949660374},
+        {nome:"US Jardim Irene", end:"Estrada da Cata Preta, 552, Jardim Irene, CEP 09170-000", hor:"Seg a Sex 7h às 17h", lat:-23.70944778504126, lng:-46.50623540304583},
+        {nome:"UBS Parque das Nações", end:"Praça Waldemar Soares, s/nº, Parque das Nações, CEP 09210-190", hor:"Seg a Sex 7h às 17h", lat:-23.63910128997565, lng:-46.51923242815133},
+        {nome:"Unidade de Saúde Utinga", end:"Alameda México, 643, Utinga, CEP 09220-120", hor:"Seg a Sex 7h às 17h", lat:-23.62502931389139, lng:-46.53464434110213},
+        { nome: "Pronto Atendimento - USF Paranapiacaba", lat: -23.775959764635004, lng:-46.299190016459015, end: "Avenida Ford, s/nº, Paranapiacaba, CEP 09150-060", hor: "Seg a Sex 7h às 17h" },
+        {nome:"UBS Vila Luzita", end:"Avenida Dom Pedro I, 4197, Vila Luzita, CEP 09132-033", hor:"Seg a Sex 7h às 17h", lat:-23.7004282, lng:-46.50507},
+    ];
+
+    // --- AZUL ---
+    const ubsTabagismo = [
+      { nome:"UBS Vila Helena", lat:-23.681305347854774, lng:-46.51403290552319, end:"Avenida Andrade Neves, 1082 - Vila Helena, Santo André - SP, 09175-360", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Vila Linda", lat:-23.68743920326121, lng:-46.520952627680984, end:"Rua Embaré, 97 - Vila Linda, Santo André - SP, 09175-840", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Bom Pastor", lat:-23.67809093016707, lng:-46.55249334574581, end:"Rua José D'Angelo, 35 - Jardim Ocara, Santo André - SP, 09051-090", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Jardim Santo Alberto", lat:-23.632818507689798, lng:-46.494702705038065, end:"Rua Almada, 745 - Vila Santo Alberto, Santo André - SP, 09260-420", hor:"Seg a Sex 7h às 17h" },
+      { nome:"USF Jardim Sorocaba", lat:-23.648735912577774, lng:-46.504720939749475, end:"Avenida Sorocaba, 637 - Parque João Ramalho, Santo André - SP, 09290-260", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS João Ramalho", lat:-23.655000, lng:-46.555000, end:"Rua Maragogipe", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Valparaíso", lat:-23.665000, lng:-46.535000, end:"Rua Andradina", hor:"Seg a Sex 7h às 17h" },
+      { nome:"Clínica da Família Jardim Cipreste", lat:-23.714259614875672, lng:-46.51505566105943, end:"Rua Caminho dos Vianas, 300, Jardim Cipreste, CEP 09171-884", hor:"Seg a Sex 7h às 17h" },
+      { nome:"Centro de Saúde Escola Capuava", lat:-23.6399769813459,  lng:-46.49301288250242, end:"Rua Irlanda, 700, Parque Capuava, CEP 09271-260", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Doutor Moysés Fucs", lat:-23.62739160314871, lng:-46.52199602905543, end:"Rua Alexandreta, 180, Jardim Santo Antonio, CEP 09240-200", hor:"Seg a Sex 8h às 17h" },
+      { nome:"UBS Jardim Santo André", lat:-23.7072068415466, lng:-46.49510362477858, end:"Rua Tom Jobim, 660, Jardim Santo André, CEP 09132-150", hor:"Seg a Sex 7h às 17h" },
+      { nome:"UBS Recreio da Borda do Campo", lat:-23.729790615886515, lng:-46.48414164142991, end:"Avenida Mico Leão Dourado, 2452, Recreio da Borda do Campo, CEP 09134-180", hor:"Seg a Sex 8h às 16h" }
+    ];
+
+    // --- LARANJA ---
+    const ubsControlados = [
+      { nome:"UBS Cruzado Sylvia Augusta dos Santosa", lat:-23.71045504447239, lng:-46.497454106046476, end:"Rua dos Vicentinos, 335, Jardim Santo André, CEP 09132-500", hor:"Seg a Sex 7h às 17h" }
+    ];
+
+    // --- VERMELHO ---
+    const farmaciaPopular = [
+      { nome: "PróPharmacos Farmácia e Manipulação - Marajoara", lat: -23.665725601044148, lng: -46.48982630175531, end: "Avenida São Paulo, 135 - Parque Marajoara, Santo André - SP, 09111-410", hor: "Seg a Sex 8h às 20h" },
+      { nome: "PróPharmacos Farmácia e Manipulação", lat: -23.667398983396566, lng: -46.52515408945662, end: "Rua Guilherme Marconi, 324 - Vila Assunção, Santo André - SP, 09020-270", hor: "Seg a Sex 8h às 19h - Sáb 8h às 13h" },
+
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.663549116592538, lng: -46.53319228619546, end: "Avenida Portugal, 865 - Loja 01 - Jardim Bela Vista, Santo André - SP, 09040-011", hor: "Seg a Dom 7h às 23h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.619456207949558, lng: -46.538486887539634, end: "Avenida Utinga, 1599 - Vila Metalúrgica, Santo André - SP, 09220-611", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.698158944821678, lng: -46.50644211637399, end: "Avenida Capitão Mário Toledo de Camargo, 5252 - Jardim Teles de Menezes, Santo André - SP, 09170-150", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.68683158758755, lng: -46.521430293245444, end: "Rua Carijós, 1843 - Loja 08 - Vila Linda, Santo André - SP, 09180-001", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.63920862588819, lng: -46.53949121762231, end: "Rua dos Coqueiros, 310 - Campestre, Santo André - SP, 09080-010", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.67727136494658, lng: -46.51611925983038, end: "Rua das Hortências, 103 - Jardim do Estádio, Santo André - SP, 09175-500", hor: "Seg a Dom 7h às 23h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.640502569174693, lng: -46.49930149743841, end: "Avenida das Nações, 1600 - Parque Erasmo Assunção, Santo André - SP, 09270-400", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.67123910822121, lng: -46.51382782619954, end: "Avenida Dom Pedro I, 722 - Vila Pires, Santo André - SP, 09110-000", hor: "Seg a Sex 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.664366631190017, lng: -46.523405060775744, end: "Rua Gertrúdes de Lima, 658 - Centro, Santo André - SP, 09020-010", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.693947261203824, lng: -46.52975216620511, end: "Rua Otávio Cândido, 150 - Jardim Las Vegas, Santo André - SP, 09182-710", hor: "Seg a Dom 7h às 23h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.677586579109068, lng: -46.53806347792104, end: "Avenida Pereira Barreto, 1286 - Paraíso, Santo André - SP, 09190-610", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.654667103353432, lng: -46.52562968698391, end: "Avenida Queirós dos Santos, 456 - Centro, Santo André - SP, 09015-310", hor: "Seg a Dom 7h às 22h" },
+      { nome: "COOP - COOPERATIVA DE CONSUMO", lat: -23.63872937118888, lng: -46.517286993246756, end: "Rua Suíça, 1094 - Parque das Nações, Santo André - SP, 09210-000", hor: "Seg a Dom 7h às 22h" },
+
+      { nome: "Feliz Farma", lat: -23.653058568799434, lng: -46.529696822105905, end: "Avenida Industrial, 89 - Jardim, Santo André - SP, 09090-400", hor: "Seg a Sáb 7h às 21h" },
+      { nome: "Feliz Farma", lat: -23.65459893004382, lng: -46.52797122426225, end: "Rua General Glicério, 122 - Centro, Santo André - SP, 09015-190", hor: "Seg a Dom 8h às 19h" },
+      { nome: "Feliz Farma", lat: -23.643239277271025, lng: -46.49651768721154, end: "Avenida das Nações, 2064 - Parque Novo Oratório, Santo André - SP, 09270-400", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Feliz Farma", lat: -23.676281332839277, lng: -46.511228393774594, end: "Avenida Pedro I, 1400 - Vila Pires, Santo André - SP, 09130-400", hor: "Seg a Sáb 7h às 23h - Dom 8h às 22h" },
+      { nome: "Feliz Farma", lat: -23.675003176445806, lng: -46.52479080131649, end: "Praça Almeida Júnior, 39 - Vila Assunção, Santo André - SP, 09030-525", hor: "Seg a Sáb 7h às 21h" },
+      { nome: "Feliz Farma", lat: -23.635182063773417, lng: -46.53262216212574, end: "Praça Rui Barbosa, 132 - Santa Terezinha, Santo André - SP, 09210-620", hor: "Seg a Dom 7h às 22h" },
+
+      { nome: "Drogaria São Paulo", lat: -23.66754651083815, lng: -46.51445951049985, end: "Avenida Dom Pedro I, 336 - Vila América, Santo André - SP, 09110-000", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Drogaria São Paulo", lat: -23.64709530730506, lng: -46.514825552866355, end: "Avenida Itamarati, 933 - Vila Curuçá, Santo André - SP, 09290-730", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.668141045135446, lng: -46.53334327869668, end: "Avenida Pereira Barreto, 42 - Paraíso, Santo André - SP, 09190-210", hor: "Seg a Dom 10h às 22h" },
+      { nome: "Drogaria São Paulo", lat: -23.6612181694719, lng: -46.53268912354625, end: "Avenida Portugal, 602 - Centro, Santo André - SP, 09040-000", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.660924048953973, lng: -46.528604049858444, end: "Rua Coronel Alfredo Flaquer, 28 - Centro, Santo André - SP, 09020-040", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Drogaria São Paulo", lat: -23.64673130434351, lng: -46.53361049960426, end: "Avenida Industrial, 600 - Centro, Santo André - SP, 09080-500", hor: "Seg a Dom 10h às 22h" },
+      { nome: "Drogaria São Paulo", lat: -23.684698327872493, lng: -46.52186101266083, end: "Rua Carijós, 1629 - Vila Linda, Santo André - SP, 09180-001", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.63399749524987, lng: -46.501776247360375, end: "Rua Cáucaso, 809 - Parque Novo Oratório, Santo André - SP, 09260-010", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Drogaria São Paulo", lat: -23.65289602274103, lng: -46.532349252443495, end: "Rua das Bandeiras, 5 - Jardim, Santo André - SP, 09090-780", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Drogaria São Paulo", lat: -23.664682710585762, lng: -46.52251031587147, end: "Rua Gertrúdes de Lima, 749 - Centro, Santo André - SP, 09020-000", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.669356144221275, lng: -46.538988870252, end: "Avenida Portugal, 1767 - Centro, Santo André - SP, 09041-321", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.649912603965262, lng: -46.533911728345046, end: "Avenida Dom Pedro II, 563 - Jardim, Santo André - SP, 09080-110", hor: "Atendimento 24h" },
+      { nome: "Drogaria São Paulo", lat: -23.63742883136819, lng: -46.517043250865726, end: "Rua Oratório, 1694 - Parque das Nações, Santo André - SP, 09280-000", hor: "Seg a Dom 7h às 23h" },
+
+      { nome: "Drogasil", lat: -23.646608298105434, lng: -46.54105056856455, end: "Esquina - Rua das Aroeiras, Rua das Figueiras, 465 - Jardim, Santo André - SP, 09090-000", hor: "Atendimento 24h" },
+      { nome: "Drogasil", lat: -23.662410195988716, lng: -46.532938566510616, end: "Avenida Portugal, 762 - Centro, Santo André - SP, 09040-001", hor: "Atendimento 24h" },
+      { nome: "Drogasil", lat: -23.66097992085291, lng: -46.510220739580745, end: "Avenida Pedro Américo, 23 - BOX 19 e 20 - Vila Homero Thon, Santo André - SP, 09110-560", hor: "Seg a Dom 7h às 23h" },
+      { nome: "Drogasil", lat: -23.659166071176678, lng: -46.52725775105814, end: "Praça Embaixador Pedro de Tolêdo, 20 - Centro, Santo André - SP, 09010-050", hor: "Seg a Sáb 7h às 22h" },
+      { nome: "Drogasil", lat: -23.654763342505426, lng: -46.52820100042331, end: "Rua Bernardino de Campos, 171 - Centro, Santo André - SP, 09015-010", hor: "Seg a Sáb 7h às 20h30" },
+      { nome: "Drogasil", lat: -23.648899740967078, lng: -46.53954324718228, end: "Rua das Figueiras, 950 - Jardim, Santo André - SP, 18132-490", hor: "Seg a Dom 7h às 23h" },
+
+      { nome: "Fabims Farma", lat: -23.67034132136459, lng: -46.513858672838445, end: "Avenida Dom Pedro I, 658 - Vila América, Santo André - SP, 09130-400", hor: "Seg a Sáb 8h às 20h - Dom 9h às 12h" },
+      { nome: "DrogaDina", lat: -23.642843872588617, lng: -46.55220107166414, end: "Alameda São Caetano, 1670 - Campestre, Santo André - SP, 09070-210", hor: "Seg a Sáb 7h às 21h - Dom 7h às 13h" },
+      { nome: "Gran Farma Drogaria e Manipulação", lat: -23.65955751497402, lng: -46.526763917181775, end: "Rua Senador Flaquer, 41 - Centro, Santo André - SP, 09010-160", hor: "Seg a Sex 7h30 às 21h30 - Sáb 8h às 20h" },
+      { nome: "Hexafarma Drogarias", lat: -23.701712074455752, lng: -46.51225720096764, end: "Rua Saracanta, 6 - Jardim Guarará, Santo André - SP, 09170-790", hor: "Seg a Sáb 8h às 19h30 - Dom 8h às 13h" },
+      { nome: "Drogaria Orfarma | Farmácia Delivery ", lat: -23.63800605360823, lng: -46.54307459705773, end: "Rua Marina, 272 - Campestre, Santo André - SP, 09070-510", hor: "Seg a Sex 8h às 17h" },
+      { nome: "Drogaria São José", lat: -23.622768046335, lng: -46.52523893053682, end: "Rua Leonilda, 630 - Vila Camilópolis, Santo André - SP, 09240-260", hor: "Seg a Sáb 8h às 20h - Dom 8 às 14h" },
+      { nome: "Drogaria São Jorge II", lat: -23.671647332762568, lng: -46.48493947046965, end: "Avenida São Paulo, 1000 - Cidade São Jorge, Santo André - SP, 09111-410", hor: "Seg a Sáb 8h às 19h" },
+      { nome: "Palácio dos Remédios Drogaria", lat: -23.645949765354317, lng: -46.51398408925501, end: "Avenida Itamarati, 1083 - Vila Curuçá, Santo André - SP, 09290-730", hor: "Seg a Sáb 8h às 21h - Dom 8h às 13h" },
+      { nome: "Farmácia Drogamerica", lat: -23.645339574914825, lng: -46.55322454151519, end: "Rua Aguapeí, 636 - Santa Maria, Santo André - SP, 09070-090", hor: "Seg a Sex 8h às 20h" },
+      { nome: "Alfarma", lat: -23.62132642329099, lng: -46.527895479088635, end: "Rua Leonilda, 329 - Vila Camilópolis, Santo André - SP, 09230-260", hor: "Seg a Sex 8h às 20h" },
+      { nome: "Rony Sete Vieira - Drogaria", lat: -23.631577849184414, lng: -46.53033621605197, end: "Alameda Vieira de Carvalho, 452 - Santa Terezinha, Santo André - SP, 09210-630", hor: "Seg a Sáb 8h às 21h" },
+      { nome: "Drogaria Magi Farma", lat: -23.69220348463874, lng: -46.5277502215632, end: "Avenida Brasília, 706 - Vila Bela Vista, Santo André - SP, 09180-260", hor: "Seg a Sáb 9h às 21h" },
+      { nome: "Drogaria Maximed", lat: -23.65022153116888, lng: -46.53112734790084, end: "Avenida Industrial, 600 Grand Plaza Shopping Centro Santo André SP BR 09080-510", hor: "Seg a Sáb 10h às 22h - Dom 11h às 21h" },
+      { nome: "Drogaria Galileia", lat: -23.652911159844997, lng: -46.54276111188897, end: "Rua Estér, 428 - Vila Alpina, Santo André - SP, 09090-290", hor: "Seg a Sex 7h às 20h - Sáb a Dom 8h às 13h" },
+      { nome: "Drogaria Nova Perimetral", lat: -23.66749167073692, lng: -46.52007449139527, end: "Rua Tamoios, 125 - Vila Leopoldina, Santo André - SP, 09015-440", hor: "Seg a Sex 8h às 19h - Sáb 9h às 18h" },
+      { nome: "Farma100", lat: -23.6680331532609, lng: -46.488909915851615, end: "Avenida São Paulo, 400 - Parque Marajoara, Santo André - SP, 09111-410", hor: "Seg a Sex 8h às 20h - Sáb 8h às 14h" },
+      { nome: "Drogaria Sagitarius", lat: -23.695355090295706, lng: -46.525492588706555, end: "Rua Dracena, 284 - Jardim Alvorada, Santo André - SP, 09180-390", hor: "Seg a Sex 8h às 20h - Sáb e Dom 9h às 13h" },
+      { nome: "Drogaria Bem Estar", lat: -23.71152567019695, lng: -46.50034295757052, end: "Estrada do Pedroso, 1559 - Jardim Santo André, Santo André - SP, 09132-400", hor: "Seg a Sáb 8h às 20h - Dom 8h às 13h" },
+      { nome: "Farmácia e Manipulação Paes Martins", lat: -23.668456261769744, lng: -46.52613344870322, end: "Avenida Doutor Erasmo, 55 - Vila Assunção, Santo André - SP, 09030-010", hor: "Seg a Sex 8h às 19h - Sáb 9h às 13h" },
+      { nome: "Drogaria Ideal", lat: -23.6517772074681, lng: -46.554991554979985, end: "Rua Las Palmas, 28 - Vila Palmares, Santo André - SP, 09061-140", hor: "Seg a Sáb 8h às 19h" },
+      { nome: "ClasseFarma Drogarias", lat: -23.654300175822293, lng: -46.52783817079206, end: "Rua Bernardino de Campos, 99 - Centro, Santo André - SP, 09015-010", hor: "Seg a Sex 8h às 19h" },
+      { nome: "Droga Star", lat: -23.68887090773834, lng: -46.531162171464786, end: "Avenida Rangel Pestana, 1049 - Jardim Cristiane, Santo André - SP, 09185-220", hor: "Seg a Sex 8h às 18h" },
+      { nome: "Drogaria e Perfumaria Afonsina", lat: -23.65265328409032, lng: -46.56198950780017, end: "Rua Afonsina, 154 - Vila Palmares, Santo André - SP, 09061-300", hor: "Seg a Sex 8h30 às 19h30 - Sáb 8h30 às 14h" },
+      { nome: "Drogaria América do Sul", lat: -23.63402760909599, lng: -46.50268105983307, end: "Rua América do Sul, 11 - Parque Novo Oratório, Santo André - SP, 09270-410", hor: "Seg a Dom 8h30 às 20h" },
+];
+
+
+    // 2) MAPA
+    const map = L.map('map').setView([-23.66, -46.53], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19
+    }).addTo(map);
+
+    // 3) MARCADORES (com ícones coloridos)
+    const iconGreen = new L.Icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+
+    const iconBlue = new L.Icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+
+    const iconRed = new L.Icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+
+    const iconOrange = new L.Icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+
+    function popup(u) {
+      return `<b>${u.nome}</b><br>${u.end}<br><small>${u.hor}</small>`;
+    }
+
+    ubsTabagismoControlados.forEach(u => {
+      L.marker([u.lat, u.lng], { icon: iconGreen }).addTo(map).bindPopup(popup(u));
+    });
+
+    ubsTabagismo.forEach(u => {
+      L.marker([u.lat, u.lng], { icon: iconBlue }).addTo(map).bindPopup(popup(u));
+    });
+
+    ubsControlados.forEach(u => {
+      L.marker([u.lat, u.lng], { icon: iconOrange }).addTo(map).bindPopup(popup(u));
+    });
+
+    farmaciaPopular.forEach(u => {
+      L.marker([u.lat, u.lng], { icon: iconRed }).addTo(map).bindPopup(popup(u));
+    });
+  </script>
+</body>
+</html>
